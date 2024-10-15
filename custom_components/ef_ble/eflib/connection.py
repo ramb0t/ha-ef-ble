@@ -304,7 +304,7 @@ class Connection:
         packets = await self.parseEncPackets(bytes(recv_data))
         if len(packets) < 1:
             raise PacketReceiveError
-        data = packets[0].payload()
+        data = packets[0].payload
 
         _LOGGER.debug("%s: getAuthStatusHandler: data: %r", self._address, " ".join("{:02x}".format(c) for c in data))
         await self.autoAuthentication()
@@ -334,7 +334,7 @@ class Connection:
         if len(packets) < 1:
             raise PacketReceiveError
 
-        data = packets[0].payload()
+        data = packets[0].payload
         _LOGGER.debug("%s: autoAuthenticationHandler: data: %r", self._address, " ".join("{:02x}".format(c) for c in data))
 
         if data != b'\x00':
@@ -354,8 +354,7 @@ class Connection:
         for packet in packets:
             processed = await self._data_parse(packet)
             if not processed:
-                _LOGGER.debug("%s: listenForDataHandler: packet src: %02X, cmdSet: %02X, cmdId: %02X", self._address, packet.src(), packet.cmdSet(), packet.cmdId())
-                _LOGGER.debug("%s: listenForDataHandler: packet data: %r", self._address, " ".join("{:02x}".format(c) for c in packet.payload()))
+                _LOGGER.debug("%s: listenForDataHandler: %r", self._address, packet)
 
 def getEcdhTypeSize(curve_num: int):
     '''Returns size of ecdh based on type'''

@@ -18,17 +18,45 @@ class Packet:
         self._seq        = seq
         self._product_id = product_id
 
-    def payload(self):
-        return self._payload
+    @property
+    def src(self):
+        return self._src
 
+    @property
+    def dst(self):
+        return self._dst
+
+    @property
     def cmdSet(self):
         return self._cmd_set
 
+    @property
     def cmdId(self):
         return self._cmd_id
 
-    def src(self):
-        return self._src
+    @property
+    def payload(self):
+        return self._payload
+
+    @property
+    def dsrc(self):
+        return self._dsrc
+
+    @property
+    def ddst(self):
+        return self._ddst
+
+    @property
+    def version(self):
+        return self._version
+
+    @property
+    def seq(self):
+        return self._seq
+
+    @property
+    def productId(self):
+        return self._product_id
 
     @staticmethod
     def fromBytes(data):
@@ -102,3 +130,6 @@ class Packet:
             return b'\x0d'
         else:
             return b'\x0c'
+
+    def __repr__(self):
+        return "Packet(0x{_src:02X}, 0x{_dst:02X}, 0x{_cmd_set:02X}, 0x{_cmd_id:02X}, {_payload}, 0x{_dsrc:02X}, 0x{_ddst:02X}, 0x{_version:02X}, 0x{_seq:08X}, 0x{_product_id:02X})".format(**vars(self))

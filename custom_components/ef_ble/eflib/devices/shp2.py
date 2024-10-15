@@ -69,10 +69,10 @@ class Device(DeviceBase):
     async def data_parse(self, packet: Packet) -> bool:
         processed = False
         updated = False
-        if packet.src() == 0x0B and packet.cmdSet() == 0x0C:
-            if packet.cmdId() == 0x01:  # master_info, load_info, backup_info, watt_info, master_ver_info
+        if packet.src == 0x0B and packet.cmdSet == 0x0C:
+            if packet.cmdId == 0x01:  # master_info, load_info, backup_info, watt_info, master_ver_info
                 p = pd303_pb2.ProtoTime()
-                p.ParseFromString(packet.payload())
+                p.ParseFromString(packet.payload)
                 _LOGGER.debug("%s: %s: Parsed data: %r", self.address, self.name, str(p))
 
                 if p.HasField('load_info'):
@@ -106,9 +106,9 @@ class Device(DeviceBase):
                             updated = True
 
                 processed = True
-            elif packet.cmdId() == 0x20:  # backup_incre_info
+            elif packet.cmdId == 0x20:  # backup_incre_info
                 p = pd303_pb2.ProtoPushAndSet()
-                p.ParseFromString(packet.payload())
+                p.ParseFromString(packet.payload)
                 _LOGGER.debug("%s: %s: Parsed data: %r", self.address, self.name, str(p))
 
                 if not p.HasField('backup_incre_info'):
