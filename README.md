@@ -9,7 +9,7 @@ number of EcoFlow devices through bluetooth and monitor their status / control p
 
 Recognized devices:
 * Smart Home Panel 2 (EF-HD3####, FW Version: 4.0.0.122, WiFi Version: 2.0.1.20)
-* TODO: Delta Pro Ultra (EF-YJ####, FW Version: 5.0.0.25, WiFi Version: 2.0.2.4)
+* Delta Pro Ultra (EF-YJ####, FW Version: 5.0.0.25, WiFi Version: 2.0.2.4)
 
 **NOTICE**: this integration utilizes Bluetooth LE of the EF device, which is supporting just one
 connection at a time - so if you want to manage the device through BLE from your phone, you will
@@ -30,20 +30,17 @@ support anything you will find here.
 ## Usage
 
 Install the integration as custom_component and it will automatically find the supported devices.
-On configuration you will need to find your EcoFlow UserID and put it in the device configuration.
+It will also require your user id that was created during initialization of your device with app.
 
-Two ways to find your UserID - it's sent to device when you bind it to your EcoFlow account and
-becomes integral part of the authentication mechanism, but usually user don't see it. It's only
-visible through:
-* If you have root on your device with ef app: from `mmkv` db. Look at the file
-  `/data/data/com.ecoflow/files/mmkv/mmkv.default` - binary, but you can find `user_id` field.
-* By log in to ecoflow site: go to https://us.ecoflow.com/ , open dev console and switch to
-  "Network" tab. Then login and find POST to https://api-a.ecoflow.com/auth/login - the response
-  contains json, which have data.user.userId field string.
+Please refer to the wiki page to find more info: https://github.com/rabits/ha-ef-ble/wiki
 
-## Reverse
+## Development & Reverse
 
 Information about how that was reversed you can find here: https://github.com/rabits/ef-ble-reverse
+
+If you want to help with this integration - your changes will be most welcomed, but I recommend to
+create a ticket first to discuss the needed features or upcoming changes to make sure they fit the
+purpose of the integration.
 
 ## Legal
 

@@ -10,12 +10,22 @@ from .packet import Packet
 
 _LOGGER = logging.getLogger(__name__)
 
-class DeviceBase:
-    '''Device Base'''
-    MANUFACTURER_KEY = 0xb5b5
 
-    def __init__(self, ble_dev: BLEDevice, adv_data: AdvertisementData, sn: str) -> None:
-        _LOGGER.debug("%s: Creating new device: %s '%s' (%s)", ble_dev.address, self.device, adv_data.local_name, sn)
+class DeviceBase:
+    """Device Base"""
+
+    MANUFACTURER_KEY = 0xB5B5
+
+    def __init__(
+        self, ble_dev: BLEDevice, adv_data: AdvertisementData, sn: str
+    ) -> None:
+        _LOGGER.debug(
+            "%s: Creating new device: %s '%s' (%s)",
+            ble_dev.address,
+            self.device,
+            adv_data.local_name,
+            sn,
+        )
         self._ble_dev = ble_dev
         self._address = ble_dev.address
         self._name = adv_data.local_name
@@ -49,29 +59,46 @@ class DeviceBase:
         return self._conn != None and self._conn.is_connected
 
     async def data_parse(self, packet: Packet):
-        '''Function to parse incoming data and trigger sensors update'''
+        """Function to parse incoming data and trigger sensors update"""
         return False
+
+    async def packet_parse(self, data: bytes):
+        """Function to parse packet"""
+        return Packet.fromBytes(data)
 
     async def connect(self, user_id: str | None = None):
         if self._conn == None:
             if user_id != None:
                 self._user_id = user_id
-            self._conn = Connection(self._ble_dev, self._sn, self._user_id, self.data_parse)
+            self._conn = Connection(
+                self._ble_dev,
+                self._sn,
+                self._user_id,
+                self.data_parse,
+                self.packet_parse,
+            )
         await self._conn.connect()
 
     async def disconnect(self):
         if self._conn == None:
-            _LOGGER.warning("%s: Device is not connected", self._address)
+            _LOGGER.error("%s: Device has no connection", self._address)
             return
 
         await self._conn.disconnect()
 
-    async def waitDisconnect(self):
+    async def waitConnected(self):
         if self._conn == None:
-            _LOGGER.warning("%s: Device is not connected", self._address)
+            _LOGGER.error("%s: Device has no connection", self._address)
             return
 
-        await self._conn.waitDisconnect()
+        await self._conn.waitConnected()
+
+    async def waitDisconnected(self):
+        if self._conn == None:
+            _LOGGER.error("%s: Device has no connection", self._address)
+            return
+
+        await self._conn.waitDisconnected()
 
     def register_callback(self, callback: Callable[[], None]) -> None:
         """Register callback, called when Device changes state."""

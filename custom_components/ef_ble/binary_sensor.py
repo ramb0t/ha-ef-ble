@@ -15,6 +15,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: DeviceConfigEntry,
@@ -24,11 +25,12 @@ async def async_setup_entry(
     device = config_entry.runtime_data
 
     new_sensors = []
-    if hasattr(device, 'error_happened'):
+    if hasattr(device, "error_happened"):
         new_sensors.append(ErrorDetectedSensor(device))
 
     if new_sensors:
         async_add_entities(new_sensors)
+
 
 class ErrorDetectedSensor(SensorBase):
     """Represents that problem happened on device."""

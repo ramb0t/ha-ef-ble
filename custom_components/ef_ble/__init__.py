@@ -1,4 +1,4 @@
-'''The unofficial EcoFlow BLE devices integration'''
+"""The unofficial EcoFlow BLE devices integration"""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ type DeviceConfigEntry = ConfigEntry[eflib.DeviceBase]
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass: HomeAssistant, entry: DeviceConfigEntry) -> bool:
     """Set up EF BLE device from a config entry."""
 
@@ -30,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: DeviceConfigEntry) -> bo
 
     if address is None or user_id is None:
         return False
-    
+
     if not bluetooth.async_address_present(hass, address):
         raise ConfigEntryNotReady("EcoFlow BLE device not present")
 
@@ -58,6 +59,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: DeviceConfigEntry) -> b
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     return unload_ok
+
 
 def device_info(entry: ConfigEntry) -> DeviceInfo:
     """Device info."""

@@ -1,10 +1,14 @@
 """Key data is needed to generate session key"""
+
 import base64
 
-def get8bytes(pos: int):
-    return _data[pos:pos+8]
 
-_data = base64.b64decode(b'\
+def get8bytes(pos: int):
+    return _data[pos : pos + 8]
+
+
+_data = base64.b64decode(
+    b"\
 0YJKCksI0pageNcGpGEn8S0fXpRXO3sHSJsLZI6p1Lg+uTfXMFXlvPDpkp419O5K/RFgTrYM8PZDEhnKy+vsbYqPb9FdNVNihmQ\
 KawepROIEI8F+7uGkVvzY9VaYjzbwXk15OAob0dkDDsB6S5BlmVGIhhre9x8x+fBKUlY2WaZSUt1AdA2qd2Gi2h9Fu7urQatNMj\
 qDelInqnyoli0IREZ/sgfM4p+xLGFjXdJp4kNgw6axmKltqheKcBDm+qLo/4L4kpmy/3oEOteP9b27+WoP/c7jJ80wD/uNu9Cqb\
@@ -884,4 +888,5 @@ KkpjOozVPcvift1NuJxV9O6Gu+9zorJFxkgsMK9n8fYCl/uEPJn7WMc1xQ/U6dqehMIHjM7jY8IYKS7i
 r8t49LHe8bq+v3LQzaDlBRZacpgR+h8l4fgJmDN6E4INSsV2effCK18ApESUN64zXimRph1go1k1moUWAidDVHZNVSdMEekVd3M\
 pu+B64Qs3knm1f5iSwNVnsh6ybtO8uXVoKa/ceT1mQPzYlIk309o4YHq1ZRKgLJECQqUNq/sHRdj+JYKO+uXn9yWWep1xkx1Jrp\
 tukPTXo/kV7mQeTIs+gzFap3R0YOWtiN+/5SAEAvfr9e8NenGD7UuAiwwbYNtmyX4STxfx9yZEp92fmQDKBImiVRumkuCm/JJ0R\
-PJCduV5T5BL2FrVnJQE')
+PJCduV5T5BL2FrVnJQE"
+)
