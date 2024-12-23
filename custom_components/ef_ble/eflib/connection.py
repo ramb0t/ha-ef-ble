@@ -66,6 +66,7 @@ class Connection:
         self._connected = asyncio.Event()
         self._disconnected = asyncio.Event()
         self._retry_on_disconnect = False
+        self._retry_on_disconnect_delay = 10
 
         self._enc_packet_buffer = b""
 
@@ -96,13 +97,12 @@ class Connection:
                 )
         except (asyncio.TimeoutError, BleakError) as err:
             _LOGGER.error("%s: Failed to connect to the device: %s", self._address, err)
-            # Retry connection after error with a bit of delay
-            # loop = asyncio.get_event_loop()
-            # loop.call_later(5, asyncio.create_task, self.connect())
+            self.disconnected()
             return
 
         _LOGGER.info("%s: Connected", self._address)
         self._retry_on_disconnect = True
+        self._retry_on_disconnect_delay = 10
 
         if self._client._backend.__class__.__name__ == "BleakClientBlueZDBus":
             await self._client._backend._acquire_mtu()
@@ -113,14 +113,28 @@ class Connection:
         await self.initBleSessionKey()
 
     def disconnected(self, *args, **kwargs) -> None:
-        _LOGGER.info("%s: Disconnected from device", self._address)
+        _LOGGER.warning("%s: Disconnected from device", self._address)
         if self._retry_on_disconnect:
             loop = asyncio.get_event_loop()
-            loop.create_task(self.connect())
+            loop.create_task(self.reconnect())
         else:
             self._disconnected.set()
 
-    async def disconnect(self):
+    async def reconnect(self) -> None:
+        # Wait before reconnect
+        _LOGGER.warning(
+            "%s: Reconnecting to the device in %d seconds...",
+            self._address,
+            self._retry_on_disconnect_delay,
+        )
+        await asyncio.sleep(self._retry_on_disconnect_delay)
+        if not self._retry_on_disconnect:
+            _LOGGER.warning("%s: Reconnect is aborted", self._address)
+            return
+        self._retry_on_disconnect_delay += 10
+        await self.connect()
+
+    async def disconnect(self) -> None:
         _LOGGER.info("%s: Disconnecting from device", self._address)
         self._retry_on_disconnect = False
         if self._client != None:
@@ -196,7 +210,7 @@ class Connection:
             _LOGGER.error(
                 "%s: parseSimple: Unable to parse simple packet - incorrect CRC16: %r",
                 self._address,
-                bytearray(data[: 6 + payload_length]).hex(),
+                bytearray(payload_data).hex(),
             )
             raise PacketParseError
 
@@ -248,7 +262,7 @@ class Connection:
                 _LOGGER.error(
                     "%s: Unable to parse encrypted packet - incorrect CRC16: %r",
                     self._address,
-                    bytearray(data[: 6 + payload_length]).hex(),
+                    bytearray(payload_data).hex(),
                 )
                 continue
 

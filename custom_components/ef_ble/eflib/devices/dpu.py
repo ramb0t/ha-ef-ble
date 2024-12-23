@@ -15,6 +15,7 @@ class Device(DeviceBase):
     """Delta Pro Ultra"""
 
     SN_PREFIX = b"Y711"
+    NAME_PREFIX = "EF-YJ"
 
     @staticmethod
     def check(sn):

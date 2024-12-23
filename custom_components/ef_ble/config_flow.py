@@ -64,7 +64,7 @@ class EFBLEConfigFlow(ConfigFlow, domain=DOMAIN):
         device = self._discovered_device
         assert self._discovery_info is not None
         discovery_info = self._discovery_info
-        title = discovery_info.name  # TODO: Read user defined title of device here
+        title = device.name_by_user or device.name
         _LOGGER.debug("Confirm discovery: %s, %s", title, user_input)
         if user_input is not None:
             return self.async_create_entry(title=title, data=user_input)
@@ -108,9 +108,7 @@ class EFBLEConfigFlow(ConfigFlow, domain=DOMAIN):
                 discovery_info.device, discovery_info.advertisement
             )
             if device != None:
-                self._discovered_devices[address] = (
-                    discovery_info.name  # TODO: read user-defined title from device
-                )
+                self._discovered_devices[address] = device.name_by_user or device.name
 
         if not self._discovered_devices:
             return self.async_abort(reason="no_devices_found")

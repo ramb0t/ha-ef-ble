@@ -15,6 +15,7 @@ class Device(DeviceBase):
     """Smart Home Panel 2"""
 
     SN_PREFIX = b"HD31"
+    NAME_PREFIX = "EF-HD3"
 
     NUM_OF_CIRCUITS = 12
     NUM_OF_CHANNELS = 3
@@ -43,6 +44,13 @@ class Device(DeviceBase):
     def battery_level(self) -> int | None:
         """Battery level as a percentage."""
         return self._data_battery_level
+
+    @battery_level.setter
+    def battery_level(self, value: int) -> None:
+        """Sets Battery level as a percentage and calls callbacks."""
+        if self._data_battery_level != value:
+            self._data_battery_level = value
+            self.update_callback("battery_level")
 
     @property
     def channel_power(self) -> list[int | None]:
@@ -150,9 +158,7 @@ class Device(DeviceBase):
                             updated = True
 
                     if info.HasField("backup_bat_per"):
-                        if self.battery_level != info.backup_bat_per:
-                            self._data_battery_level = info.backup_bat_per
-                            updated = True
+                        self.battery_level = info.backup_bat_per
 
                     # TODO: Energy2_info.pv_height_charge_watts
                     # TODO: Energy2_info.pv_low_charge_watts

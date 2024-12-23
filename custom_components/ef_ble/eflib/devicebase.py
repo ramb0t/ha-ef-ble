@@ -20,20 +20,21 @@ class DeviceBase:
         self, ble_dev: BLEDevice, adv_data: AdvertisementData, sn: str
     ) -> None:
         _LOGGER.debug(
-            "%s: Creating new device: %s '%s' (%s)",
+            "%s: Creating new device: %s (%s)",
             ble_dev.address,
             self.device,
-            adv_data.local_name,
             sn,
         )
         self._ble_dev = ble_dev
         self._address = ble_dev.address
-        self._name = adv_data.local_name
-        self._name_by_user = self._name
         self._sn = sn
+        # We can't use advertisement name here - it's prone to change to "Ecoflow-dev"
+        self._name = self.NAME_PREFIX + self._sn[-4:]
+        self._name_by_user = self._name
 
         self._conn = None
         self._callbacks = set()
+        self._callbacks_map = dict()
 
     @property
     def device(self):
@@ -100,10 +101,27 @@ class DeviceBase:
 
         await self._conn.waitDisconnected()
 
-    def register_callback(self, callback: Callable[[], None]) -> None:
+    def register_callback(
+        self, callback: Callable[[], None], propname: str | None
+    ) -> None:
         """Register callback, called when Device changes state."""
-        self._callbacks.add(callback)
+        if propname is None:
+            self._callbacks.add(callback)
+        else:
+            self._callbacks_map[propname] = self._callbacks_map.get(
+                propname, set()
+            ).union([callback])
 
-    def remove_callback(self, callback: Callable[[], None]) -> None:
+    def remove_callback(
+        self, callback: Callable[[], None], propname: str | None
+    ) -> None:
         """Remove previously registered callback."""
-        self._callbacks.discard(callback)
+        if propname is None:
+            self._callbacks.discard(callback)
+        else:
+            self._callbacks_map.get(propname, set()).discard(callback)
+
+    def update_callback(self, propname: str) -> None:
+        """Finding the registered callbacks in the map and then calling the callbacks"""
+        for callback in self._callbacks_map.get(propname, set()):
+            callback()

@@ -74,6 +74,9 @@ class SensorBase(SensorEntity):
     _attr_has_entity_name = True
     _attr_state_class = SensorStateClass.MEASUREMENT
 
+    # Name of the property to use to get a native value
+    ef_dev_property = "UNDEFINED"
+
     def __init__(self, device):
         """Initialize the sensor."""
         self._device = device
@@ -93,13 +96,29 @@ class SensorBase(SensorEntity):
         """Return True if device is connected."""
         return self._device.is_connected
 
+    # Uses ef_dev_property to get the device sensor value
+    @property
+    def native_value(self) -> int | float | bool:
+        """Return the value of the sensor."""
+        return getattr(self._device, self.ef_dev_property, None)
+
     async def async_added_to_hass(self):
         """Run when this Entity has been added to HA."""
-        self._device.register_callback(self.async_write_ha_state)
+        if self.ef_dev_property != "UNDEFINED":
+            self._device.register_callback(
+                self.async_write_ha_state, self.ef_dev_property
+            )
+        else:
+            self._device.register_callback(self.async_write_ha_state, None)
 
     async def async_will_remove_from_hass(self):
         """Entity being removed from hass."""
-        self._device.remove_callback(self.async_write_ha_state)
+        if self.ef_dev_property != "UNDEFINED":
+            self._device.remove_callback(
+                self.async_write_ha_state, self.ef_dev_property
+            )
+        else:
+            self._device.remove_callback(self.async_write_ha_state, None)
 
 
 class BatterySensor(SensorBase):
@@ -108,17 +127,15 @@ class BatterySensor(SensorBase):
     device_class = SensorDeviceClass.BATTERY
     _attr_native_unit_of_measurement = PERCENTAGE
 
+    # Name of the property to use to get a native value
+    ef_dev_property = "battery_level"
+
     def __init__(self, device):
         """Initialize the sensor."""
         super().__init__(device)
 
         self._attr_unique_id = f"{self._device.name}_battery"
         self._attr_name = "Battery"
-
-    @property
-    def native_value(self) -> int:
-        """Return the value of the sensor."""
-        return self._device.battery_level
 
 
 class CircuitPowerSensor(SensorBase):
