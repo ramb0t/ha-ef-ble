@@ -155,9 +155,9 @@ class Connection:
         await self._disconnected.wait()
 
     async def errorsAdd(self, exception: Exception):
-        tb = traceback.extract_tb(exception.__traceback__)
+        tb = traceback.format_tb(exception.__traceback__)
         _LOGGER.error(
-            "%s: Captured exception: %s: %s", self._address, exception, tb.format_exc()
+            "%s: Captured exception: %s:\n%s", self._address, exception, "".join(tb)
         )
         self._errors += 1
         if self._errors > 5:
@@ -489,7 +489,7 @@ class Connection:
         try:
             packets = await self.parseEncPackets(bytes(recv_data))
         except Exception as e:
-            await self.errorsAdd(err)
+            await self.errorsAdd(e)
             return
 
         for packet in packets:
