@@ -1,6 +1,7 @@
 import struct
 import asyncio
 import logging
+import traceback
 from collections.abc import Callable
 
 from bleak import BleakError
@@ -62,6 +63,7 @@ class Connection:
         self._data_parse = data_parse
         self._packet_parse = packet_parse
 
+        self._errors = 0
         self._client = None
         self._connected = asyncio.Event()
         self._disconnected = asyncio.Event()
@@ -100,7 +102,11 @@ class Connection:
             self.disconnected()
             return
 
-        _LOGGER.info("%s: Connected", self._address)
+        _LOGGER.info(
+            "%s: Connected",
+            self._address,
+        )
+        self._errors = 0
         self._retry_on_disconnect = True
         self._retry_on_disconnect_delay = 10
 
@@ -137,7 +143,7 @@ class Connection:
     async def disconnect(self) -> None:
         _LOGGER.info("%s: Disconnecting from device", self._address)
         self._retry_on_disconnect = False
-        if self._client != None:
+        if self._client != None and self._client.is_connected:
             await self._client.disconnect()
 
     async def waitConnected(self):
@@ -147,6 +153,18 @@ class Connection:
     async def waitDisconnected(self):
         """Will release when client got disconnected from the device"""
         await self._disconnected.wait()
+
+    async def errorsAdd(self, exception: Exception):
+        tb = traceback.extract_tb(exception.__traceback__)
+        _LOGGER.error(
+            "%s: Captured exception: %s: %s", self._address, exception, tb.format_exc()
+        )
+        self._errors += 1
+        if self._errors > 5:
+            # Too much errors happened - let's reconnect
+            self._errors = 0
+            if self._client != None and self._client.is_connected:
+                await self._client.disconnect()
 
     # En/Decrypt functions must create AES object every time, because
     # it saves the internal state after encryption and become useless
@@ -257,32 +275,58 @@ class Connection:
             # Move to next data packet
             data = data[data_end:]
 
-            # Check the packet CRC16
-            if crc16(header + payload_data) != struct.unpack("<H", payload_crc)[0]:
-                _LOGGER.error(
-                    "%s: Unable to parse encrypted packet - incorrect CRC16: %r",
+            try:
+                # Check the packet CRC16
+                if crc16(header + payload_data) != struct.unpack("<H", payload_crc)[0]:
+                    _LOGGER.error(
+                        "%s: Unable to parse encrypted packet - incorrect CRC16: %r",
+                        self._address,
+                        bytearray(payload_data).hex(),
+                    )
+                    raise PacketParseError
+
+                # Decrypt the payload packet
+                payload = await self.decryptSession(payload_data)
+                _LOGGER.debug(
+                    "%s: parseEncPackets: decrypted payload: %r",
                     self._address,
-                    bytearray(payload_data).hex(),
+                    bytearray(payload).hex(),
                 )
-                continue
 
-            # Decrypt the payload packet
-            payload = await self.decryptSession(payload_data)
-            _LOGGER.debug(
-                "%s: parseEncPackets: decrypted payload: %r",
-                self._address,
-                bytearray(payload).hex(),
-            )
-
-            # Parse packet
-            packet = await self._packet_parse(payload)
-            if packet != None:
-                packets.append(packet)
+                # Parse packet
+                packet = await self._packet_parse(payload)
+                if packet != None:
+                    packets.append(packet)
+            except Exception as e:
+                await self.errorsAdd(e)
 
         return packets
 
     async def sendRequest(self, send_data: bytes, response_handler=None):
         _LOGGER.debug("%s: Sending: %r", self._address, bytearray(send_data).hex())
+        # In case exception happens we need to try again
+        err = None
+        for retry in range(3):
+            try:
+                await self._sendRequest(send_data, response_handler)
+                return
+            except Exception as e:
+                if err is None:
+                    err = e
+                await asyncio.sleep(retry + 1)
+                continue
+
+        await self.errorsAdd(err)
+
+    async def _sendRequest(self, send_data: bytes, response_handler=None):
+        # Make sure the connection is here, otherwise just skipping
+        if not self._client.is_connected:
+            _LOGGER.debug(
+                "%s: Skip sending: disconnected: %r",
+                self._address,
+                bytearray(send_data).hex(),
+            )
+            return
         if response_handler:
             await self._client.start_notify(
                 Connection.NOTIFY_CHARACTERISTIC, response_handler
@@ -346,6 +390,10 @@ class Connection:
         await self._client.stop_notify(Connection.NOTIFY_CHARACTERISTIC)
 
         data = await self.parseSimple(bytes(recv_data))
+        if len(data) < 3:
+            raise Exception(
+                "Incorrect size of the returned pub key data: " + data.hex()
+            )
         status = data[1]
         ecdh_type_size = getEcdhTypeSize(data[2])
         self._dev_pub_key = ecdsa.VerifyingKey.from_string(
@@ -438,7 +486,11 @@ class Connection:
     async def listenForDataHandler(
         self, characteristic: BleakGATTCharacteristic, recv_data: bytearray
     ):
-        packets = await self.parseEncPackets(bytes(recv_data))
+        try:
+            packets = await self.parseEncPackets(bytes(recv_data))
+        except Exception as e:
+            await self.errorsAdd(err)
+            return
 
         for packet in packets:
             processed = False
@@ -453,6 +505,7 @@ class Connection:
                     raise AuthFailedError
                 processed = True
                 self._connected.set()
+                _LOGGER.info("%s: Auth completed, everything is fine", self._address)
             else:
                 # Processing the packet with specific device
                 processed = await self._data_parse(packet)

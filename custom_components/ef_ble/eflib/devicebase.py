@@ -78,6 +78,7 @@ class DeviceBase:
                 self.data_parse,
                 self.packet_parse,
             )
+            _LOGGER.info("%s: Connecting to %s", self._address, self.__doc__)
         await self._conn.connect()
 
     async def disconnect(self):
