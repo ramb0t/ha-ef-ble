@@ -1,12 +1,14 @@
 {
   "config": {
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "Device is already configured",
+      "not_supported": "Device not supported",
+      "no_devices_found": "No supported Ecoflow devices found"
     },
     "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
+      "cannot_connect": "Cannot connect",
+      "invalid_auth": "Authentication is invalid",
+      "unknown": "Unexpected error"
     },
     "step": {
       "user": {
