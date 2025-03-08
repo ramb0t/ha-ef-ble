@@ -27,7 +27,7 @@ SWITCH_TYPES = [
         key="energy_backup",
         name="Backup Reserve",
         device_class=SwitchDeviceClass.SWITCH,
-    )
+    ),
 ]
 
 
