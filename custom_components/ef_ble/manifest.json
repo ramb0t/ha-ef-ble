@@ -26,19 +26,19 @@
         {
             "local_name": "EF-D3*",
             "manufacturer_id": 46517,
-            "manufacturer_data_start": [19, 50, 33],
+            "manufacturer_data_start": [19, 80, 50, 51, 49],
             "connectable": true
         },
         {
             "local_name": "EF-D3*",
             "manufacturer_id": 46517,
-            "manufacturer_data_start": [19, 50, 32],
+            "manufacturer_data_start": [19, 80, 51, 53, 49],
             "connectable": true
         },
         {
             "local_name": "EF-D3*",
             "manufacturer_id": 46517,
-            "manufacturer_data_start": [19, 68, 51],
+            "manufacturer_data_start": [19, 68, 51, 54, 49],
             "connectable": true
         }
     ],

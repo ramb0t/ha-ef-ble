@@ -2,17 +2,22 @@ import logging
 
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
+from google.protobuf.message import Message
 
 from ..commands import TimeCommands
-from ..device_properties import Field, ProtobufField, UpdatableProps
 from ..devicebase import DeviceBase
 from ..packet import Packet
 from ..pb import pd335_sys_pb2
+from ..props import (
+    ProtobufProps,
+    pb_field,
+    proto_attr_mapper,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _out_power(x):
+def _out_power(x) -> float:
     return -round(x, 2) if x != 0 else 0
 
 
@@ -22,45 +27,42 @@ def _flow_is_on(x):
     return (int(x) & 0b11) in [0b10, 0b11]
 
 
-class Device(DeviceBase, UpdatableProps):
+pb = proto_attr_mapper(pd335_sys_pb2.DisplayPropertyUpload)
+
+
+class Device(DeviceBase, ProtobufProps):
     """Delta 3"""
 
     SN_PREFIX = (b"P231", b"D361", b"P351")
     NAME_PREFIX = "EF-D3"
 
-    battery_level = ProtobufField[int]("bms_batt_soc")
+    battery_level = pb_field(pb.bms_batt_soc, lambda value: round(value, 2))
 
-    ac_input_power = ProtobufField[float]("pow_get_ac_in")
+    ac_input_power = pb_field(pb.pow_get_ac_in)
 
-    ac_output_power = ProtobufField[float]("pow_get_ac_out", _out_power)
+    ac_output_power = pb_field(pb.pow_get_ac_out, _out_power)
 
-    input_power = ProtobufField[int]("pow_in_sum_w")
-    input_energy = Field[int]()
+    input_power = pb_field(pb.pow_in_sum_w)
+    output_power = pb_field(pb.pow_out_sum_w)
 
-    output_power = ProtobufField[int]("pow_out_sum_w")
-    output_energy = Field[int]()
+    dc_input_power = pb_field(pb.pow_get_pv)
+    dc12v_output_power = pb_field(pb.pow_get_12v, _out_power)
 
-    dc_input_power = ProtobufField[float]("pow_get_pv")
+    usbc_output_power = pb_field(pb.pow_get_typec1, _out_power)
+    usba_output_power = pb_field(pb.pow_get_qcusb1, _out_power)
 
-    dc12v_output_power = ProtobufField[float]("pow_get_12v")
+    plugged_in_ac = pb_field(pb.plug_in_info_ac_charger_flag)
+    energy_backup = pb_field(pb.energy_backup_en)
+    energy_backup_battery_level = pb_field(pb.energy_backup_start_soc)
+    battery_input_power = pb_field(pb.pow_get_bms, lambda value: max(0, value))
+    battery_output_power = pb_field(pb.pow_get_bms, lambda value: -min(0, value))
 
-    usbc_output_power = ProtobufField[float]("pow_get_typec1", _out_power)
+    battery_charge_limit_min = pb_field(pb.cms_min_dsg_soc)
+    battery_charge_limit_max = pb_field(pb.cms_max_chg_soc)
 
-    usba_output_power = ProtobufField[float]("pow_get_qcusb1", _out_power)
-
-    plugged_in_ac = ProtobufField[bool]("plug_in_info_ac_charger_flag")
-    energy_backup = ProtobufField[bool]("energy_backup_en")
-    energy_backup_battery_level = ProtobufField[int]("energy_backup_start_soc")
-    battery_input_power = ProtobufField("pow_get_bms", (lambda value: max(0, value)))
-    battery_output_power = ProtobufField("pow_get_bms", lambda value: -min(0, value))
-
-    battery_charge_limit_min = ProtobufField[int]("cms_min_dsg_soc")
-    battery_charge_limit_max = ProtobufField[int]("cms_max_chg_soc")
-
-    cell_temperature = ProtobufField[int]("bms_max_cell_temp")
-
-    dc_12v_port = ProtobufField[bool]("flow_info_12v", _flow_is_on)
-    ac_ports = ProtobufField[bool]("flow_info_ac_out", _flow_is_on)
+    cell_temperature = pb_field(pb.bms_max_cell_temp)
+    dc_12v_port = pb_field(pb.flow_info_12v, _flow_is_on)
+    ac_ports = pb_field(pb.flow_info_ac_out, _flow_is_on)
 
     def __init__(
         self, ble_dev: BLEDevice, adv_data: AdvertisementData, sn: str
@@ -93,7 +95,7 @@ class Device(DeviceBase, UpdatableProps):
             p.ParseFromString(packet.payload)
             _LOGGER.debug("%s: %s: Parsed data: %r", self.address, self.name, packet)
             _LOGGER.debug("Delta 3 Parsed Message \n %s", str(p))
-            self.update_fields(p)
+            self.update_from_message(p)
             processed = True
         elif (
             packet.src == 0x35
@@ -112,7 +114,7 @@ class Device(DeviceBase, UpdatableProps):
 
         return processed
 
-    async def _send_config_packet(self, message):
+    async def _send_config_packet(self, message: Message):
         payload = message.SerializeToString()
         packet = Packet(0x20, 0x02, 0xFE, 0x11, payload, 0x01, 0x01, 0x13)
         await self._conn.sendPacket(packet)
@@ -134,14 +136,14 @@ class Device(DeviceBase, UpdatableProps):
         await self._send_config_packet(config)
 
     async def enable_dc_12v_port(self, enabled: bool):
-        config = pd335_sys_pb2.ConfigWrite()
-        config.cfg_dc_12v_out_open = enabled
-        await self._send_config_packet(config)
+        await self._send_config_packet(
+            pd335_sys_pb2.ConfigWrite(cfg_dc_12v_out_open=enabled)
+        )
 
     async def enable_ac_ports(self, enabled: bool):
-        config = pd335_sys_pb2.ConfigWrite()
-        config.cfg_ac_out_open = enabled
-        await self._send_config_packet(config)
+        await self._send_config_packet(
+            pd335_sys_pb2.ConfigWrite(cfg_ac_out_open=enabled)
+        )
 
     async def set_battery_charge_limit_min(self, limit: int):
         if (
@@ -150,10 +152,7 @@ class Device(DeviceBase, UpdatableProps):
         ):
             return False
 
-        config = pd335_sys_pb2.ConfigWrite()
-        config.cfg_min_dsg_soc = limit
-
-        await self._send_config_packet(config)
+        await self._send_config_packet(pd335_sys_pb2.ConfigWrite(cfg_min_dsg_soc=limit))
         return True
 
     async def set_battery_charge_limit_max(self, limit: int):
@@ -163,8 +162,5 @@ class Device(DeviceBase, UpdatableProps):
         ):
             return False
 
-        config = pd335_sys_pb2.ConfigWrite()
-        config.cfg_max_chg_soc = limit
-
-        await self._send_config_packet(config)
+        await self._send_config_packet(pd335_sys_pb2.ConfigWrite(cfg_max_chg_soc=limit))
         return True
