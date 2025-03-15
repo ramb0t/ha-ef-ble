@@ -64,7 +64,7 @@ Recognized devices:
 </details>
 
 <details><summary>
-<b>Delta 3 (Plus, 1500) (EF-D3####, FW Version: 6.49.74.44)</b>
+<b>Delta 3 (Plus, 1500) (EF-D3####, FW Version: 6.49.76.57)</b>
 </summary>
 
 | *Sensors*                           | *Switches*     | *Sliders*            |
@@ -77,6 +77,8 @@ Recognized devices:
 | DC Port Input State                 |                |                      |
 | DC Port (2) Input Power (Plus only) |                |                      |
 | DC Port (2) Input State (Plus only) |                |                      |
+| Solar Power                         |                |                      |
+| Solar Power (2) (Plus only)         |                |                      |
 | Input Power Total                   |                |                      |
 | Output Power Total                  |                |                      |
 | Left USB A Output Power             |                |                      |
