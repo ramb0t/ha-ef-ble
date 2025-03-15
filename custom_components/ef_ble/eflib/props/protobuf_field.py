@@ -38,13 +38,40 @@ class _ProtoAttrAccessor[T1: Message]:
 
 
 def proto_attr_mapper[T: Message](pb: type[T]) -> type[T]:
+    """
+    Create proxy object for protobuf class that returns accessed attributes
+
+    This function is a convenience function for creating typed fields from protobuf
+    message classes.
+
+    Returns
+    -------
+        Proxy object that tracks all accessed attributes
+    """
     return _ProtoAttrAccessor(pb)  # type: ignore reportReturnType
 
 
 class ProtobufField[T](Field[T]):
+    """
+    Field that allows value assignment from protocol buffer message
+
+    It is recommented to not use this class directly - use `pb_field` instead for
+    better typing.
+    """
+
     def __init__(
         self, pb_field: _ProtoAttr, transform_value: Callable[[Any], T] = lambda x: x
     ):
+        """
+        Create protobuf field that allows value assignment from protobuf message
+
+        Parameters
+        ----------
+        pb_field
+            Instance of protobuf accessor created with `proto_attr_mapper`
+        transform_value, optional
+            Function that takes protobuf attribute
+        """
         self.pb_field = pb_field
         self.transform_value = transform_value
 
@@ -69,19 +96,35 @@ class ProtobufField[T](Field[T]):
 
 
 @overload
-def pb_field[ATTR](attr: ATTR, transform: None = None) -> "ProtobufField[ATTR]": ...
+def pb_field[T_ATTR](
+    attr: T_ATTR, transform: None = None
+) -> "ProtobufField[T_ATTR]": ...
 
 
 @overload
-def pb_field[ATTR, T_OUT](
-    attr: ATTR, transform: Callable[[ATTR], T_OUT]
+def pb_field[T_ATTR, T_OUT](
+    attr: T_ATTR, transform: Callable[[T_ATTR], T_OUT]
 ) -> "ProtobufField[T_OUT]": ...
 
 
 def pb_field(
     attr: Any, transform: Callable[[Any], Any] | None = None
 ) -> "ProtobufField[Any]":
-    """Protocol buffer"""
+    """
+    Create field that allows value assignment from protocol buffer messages
+
+    Parameters
+    ----------
+    attr
+        Protobuf field attribute of instance returned from `proto_attr_mapper`
+    transform, optional
+        Function that is applied to raw protobuf value
+    """
+    if not isinstance(attr, _ProtoAttr):
+        raise TypeError(
+            "Attribute has to be an instance returned from `proto_attr_mapper` after "
+            f"attribute access, but received value of '{attr}'"
+        )
     return ProtobufField(
         pb_field=attr,
         transform_value=transform if transform is not None else lambda x: x,

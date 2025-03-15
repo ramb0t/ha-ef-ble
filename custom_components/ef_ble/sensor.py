@@ -8,7 +8,6 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     PERCENTAGE,
-    EntityCategory,
     UnitOfElectricCurrent,
     UnitOfEnergy,
     UnitOfPower,
@@ -80,7 +79,7 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
         suggested_display_precision=2,
         icon="mdi:solar-panel-large",
     ),
-    # River 3
+    # River 3, Delta 3
     "input_energy": SensorEntityDescription(
         key="input_energy",
         name="Input Energy Total",
@@ -102,6 +101,7 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "ac_input_power": SensorEntityDescription(
         key="ac_input_power",
         name="AC Input Power",
+        icon="mdi:current-ac",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=2,
@@ -109,6 +109,7 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "ac_output_power": SensorEntityDescription(
         key="ac_output_power",
         name="AC Output Power",
+        icon="mdi:current-ac",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=2,
@@ -116,6 +117,7 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "ac_input_energy": SensorEntityDescription(
         key="ac_input_energy",
         name="AC Input Energy",
+        icon="mdi:current-ac",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -125,6 +127,7 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "ac_output_energy": SensorEntityDescription(
         key="ac_output_energy",
         name="AC Output Energy",
+        icon="mdi:current-ac",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -141,6 +144,7 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "dc_input_energy": SensorEntityDescription(
         key="dc_input_energy",
         name="DC Input Energy",
+        icon="mdi:current-dc",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -150,6 +154,7 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "dc12v_output_power": SensorEntityDescription(
         key="dc12v_output_power",
         name="DC 12V Output Power",
+        icon="mdi:current-dc",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=2,
@@ -157,6 +162,7 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "dc12v_output_energy": SensorEntityDescription(
         key="dc12v_output_energy",
         name="DC 12V Output Energy",
+        icon="mdi:current-dc",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -166,13 +172,14 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "usbc_output_power": SensorEntityDescription(
         key="usbc_output_power",
         name="USC C Output Power",
+        icon="mdi:usb-c-port",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
-        suggested_display_precision=2,
     ),
     "usbc_output_energy": SensorEntityDescription(
         key="usbc_output_energy",
         name="USB C Output Energy",
+        icon="mdi:usb-c-port",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -182,13 +189,14 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
     "usba_output_power": SensorEntityDescription(
         key="usba_output_power",
         name="USC A Output Power",
+        icon="mdi:usb-port",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
-        suggested_display_precision=2,
     ),
     "usba_output_energy": SensorEntityDescription(
         key="usba_output_energy",
         name="USB A Output Energy",
+        icon="mdi:usb-port",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -215,6 +223,68 @@ SENSOR_TYPES: dict[str, SensorEntityDescription] = {
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         entity_registry_enabled_default=False,
+    ),
+    "dc_port_1_input_power": SensorEntityDescription(
+        key="dc_port_input_power_left",
+        name="DC Port Input Power Left",
+        icon="mdi:current-dc",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
+    ),
+    "dc_port_2_input_power": SensorEntityDescription(
+        key="dc_port_input_power_right",
+        name="DC Port Input Power Right",
+        icon="mdi:current-dc",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
+    ),
+    "dc_port_state": SensorEntityDescription(
+        key="dc_port_state",
+        name="DC Input Port State",
+        icon="mdi:current-dc",
+        device_class=SensorDeviceClass.ENUM,
+    ),
+    "dc_port_1_state": SensorEntityDescription(
+        key="dc_port_state_left",
+        name="DC Input Port State Left",
+        icon="mdi:current-dc",
+        device_class=SensorDeviceClass.ENUM,
+    ),
+    "dc_port_2_state": SensorEntityDescription(
+        key="dc_port_state_right",
+        name="DC Input Port State Right",
+        icon="mdi:current-dc",
+        device_class=SensorDeviceClass.ENUM,
+    ),
+    "usbc1_output_power": SensorEntityDescription(
+        key="usbc1_output_power",
+        name="USB C Left Output Power",
+        icon="mdi:usb-c-port",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+    ),
+    "usbc2_output_power": SensorEntityDescription(
+        key="usbc2_output_power",
+        name="USB C Right Output Power",
+        icon="mdi:usb-c-port",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+    ),
+    "usba1_output_power": SensorEntityDescription(
+        key="usba_output_power",
+        name="USB A Left Output Power",
+        icon="mdi:usb-port",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+    ),
+    "usba2_output_power": SensorEntityDescription(
+        key="usba_output_power",
+        name="USB A Right Output Power",
+        icon="mdi:usb-port",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
     ),
 }
 

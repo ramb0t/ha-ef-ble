@@ -31,6 +31,7 @@ NUMBER_TYPES: list[EcoflowNumberEntityDescription] = [
     EcoflowNumberEntityDescription[river3.Device](
         key="energy_backup_battery_level",
         name="Backup Reserve",
+        icon="mdi:battery-sync",
         device_class=NumberDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         native_step=1.0,
@@ -44,6 +45,7 @@ NUMBER_TYPES: list[EcoflowNumberEntityDescription] = [
     EcoflowNumberEntityDescription[river3.Device](
         key="battery_charge_limit_min",
         name="Discharge Limit",
+        icon="mdi:battery-arrow-down-outline",
         device_class=NumberDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         native_step=1.0,
@@ -56,6 +58,7 @@ NUMBER_TYPES: list[EcoflowNumberEntityDescription] = [
     EcoflowNumberEntityDescription[river3.Device](
         key="battery_charge_limit_max",
         name="Charge Limit",
+        icon="mdi:battery-arrow-up",
         device_class=NumberDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         native_step=1.0,
