@@ -62,6 +62,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: DeviceConfigEntry) -> b
     """Unload a config entry."""
     device = entry.runtime_data
     await device.disconnect()
+    await device.waitDisconnected()
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     return unload_ok

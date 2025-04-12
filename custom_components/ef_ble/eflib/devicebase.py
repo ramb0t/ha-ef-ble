@@ -111,7 +111,8 @@ class DeviceBase:
             _LOGGER.error("%s: Device has no connection", self._address)
             return
 
-        await self._conn.waitDisconnected()
+        if self.is_connected:
+            await self._conn.waitDisconnected()
 
     def register_callback(
         self, callback: Callable[[], None], propname: str | None = None
